@@ -1,0 +1,38 @@
+## DB subnet/s
+resource "aws_subnet" "db" {
+  vpc_id            = "${aws_vpc.vpc.id}"
+  cidr_block        = "${var.db_subnets[count.index]}"
+  availability_zone = "${element(split(",", var.azs), count.index)}"
+  count             = "${length(var.db_subnets)}"
+
+  tags {
+    Name        = "${var.name}-db-${element(split(",", var.azs), count.index)}"
+    Environment = "${var.env}"
+    managed_by  = "terraform"
+  }
+}
+
+resource "aws_route_table" "db" {
+  vpc_id = "${aws_vpc.vpc.id}"
+  count  = "${length(var.db_subnets)}"
+
+  tags {
+    Name        = "${var.name}-db-${element(split(",", var.azs), count.index)}"
+    Environment = "${var.env}"
+    managed_by  = "terraform"
+  }
+}
+
+resource "aws_route_table_association" "db" {
+  subnet_id      = "${element(aws_subnet.db.*.id, count.index)}"
+  route_table_id = "${element(aws_route_table.db.*.id, count.index)}"
+  count          = "${length(var.db_subnets)}"
+}
+
+resource "aws_route" "nat_gateway_dbsubnet" {
+  route_table_id         = "${element(aws_route_table.db.*.id, count.index)}"
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = "${element(aws_nat_gateway.nat.*.id, count.index)}"
+  count                  = "${length(var.db_subnets) * signum(var.nat_gateways_count)}"
+  depends_on             = ["aws_route_table.db"]
+}

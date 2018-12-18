@@ -1,0 +1,22 @@
+module "bastion" {
+  source                     = "../../../modules/nonprod_nacl/networking/bastion/"
+  key_name                   = "${var.env}-${var.region}"
+  security_groups            = ["${module.security_groups.bastion_sg_id}"]
+  region                     = "${var.region}"
+  fullaz                     = "${var.region}b"
+  env                        = "${var.env}"
+  instance_type              = "${var.instance_type}"
+  name                       = "bastion"
+  subnet_id                  = "${module.vpc.public_subnets[0]}"
+  number_of_instances        = "1"
+  user                       = "${var.user}"
+  root_volume_type           = "${var.root_volume_type}"
+  root_volume_size           = "${var.root_volume_size}"
+  root_delete_on_termination = "${var.root_delete_on_termination}"
+  device_name                = "${var.device_name}"
+  volume_type                = "${var.volume_type}"
+  volume_size                = "${var.volume_size}"
+  delete_on_termination      = "${var.delete_on_termination}"
+  record_url                 = "bastion.${var.env}.mwaghadhare.com"
+  hosted_zone_id             = "${var.hosted_zone_id}"
+}
